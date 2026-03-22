@@ -15,7 +15,7 @@ NC='\033[0m'
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║   AI Marketing Suite — Claude Code Skills    ║${NC}"
-echo -e "${CYAN}║   15 Skills · 5 Agents · 4 Scripts · PDF     ║${NC}"
+echo -e "${CYAN}║   16 Skills · 5 Agents · 5 Scripts · PDF     ║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -87,6 +87,7 @@ SKILLS=(
     "market-report-pdf"
     "market-seo"
     "market-brand"
+    "market-boliga"
 )
 
 SKILL_COUNT=0
@@ -132,6 +133,7 @@ SCRIPT_FILES=(
     "competitor_scanner.py"
     "social_calendar.py"
     "generate_pdf_report.py"
+    "boliga_scraper.py"
 )
 
 SCRIPT_COUNT=0
@@ -217,6 +219,7 @@ echo "  /market report <url>       Marketing report (Markdown)"
 echo "  /market report-pdf <url>   Marketing report (PDF)"
 echo "  /market seo <url>          SEO content audit"
 echo "  /market brand <url>        Brand voice analysis"
+echo "  /market boliga <postal>    Danish real estate market analysis"
 echo ""
 echo -e "  ${YELLOW}Start a new Claude Code session to use the skills.${NC}"
 echo ""

@@ -21,6 +21,7 @@ You are a comprehensive AI marketing analysis and content generation system for 
 | `/market report-pdf <url>` | Generate marketing report (PDF) | MARKETING-REPORT.pdf |
 | `/market seo <url>` | SEO content audit | SEO-AUDIT.md |
 | `/market brand <url>` | Brand voice analysis and guidelines | BRAND-VOICE.md |
+| `/market boliga <postal_code>` | Danish real estate market analysis | BOLIGA-MARKET-REPORT.md |
 
 ## Routing Logic
 
@@ -66,6 +67,7 @@ Before running any analysis, detect the business type:
 - **Local Business** → Focus on: Google Business Profile, local SEO, reviews, directions
 - **Creator/Course** → Focus on: lead magnets, email capture, testimonials, community
 - **Marketplace** → Focus on: two-sided messaging, supply/demand balance, trust mechanisms
+- **Real Estate** → Focus on: property listings, market data, area profiles, competitive pricing, open house marketing
 
 ## Output Standards
 
@@ -92,3 +94,4 @@ Many skills work together:
 - `/market report` and `/market report-pdf` compile all available analysis data
 - `/market copy` benefits from `/market brand` voice guidelines if run first
 - `/market emails` uses insights from `/market funnel` analysis if available
+- `/market boliga` provides market data that enhances `/market copy` for property listings and `/market ads` for real estate campaigns
