@@ -609,7 +609,7 @@ what the approach is, and what the timing window looks like.)*
 2. **Entry contact:** {scores['contacts']['evidence']}
 3. **Timing window:** {scores['buying_signal']['evidence']}
 4. **Confirm on call:** Which brands do they currently install for {' / '.join(matched_cats[:3])}?
-5. **If non-Oprema brands confirmed:** Position Oprema's equivalent — {chr(', ').join(OPREMA_CATEGORIES.get(lead_cat, {}).get('oprema_brands', [])[:3]) or 'see line fit table'}
+5. **If non-Oprema brands confirmed:** Position Oprema's equivalent — {', '.join(OPREMA_CATEGORIES.get(lead_cat, {}).get('oprema_brands', [])[:3]) or 'see line fit table'}
 6. **Attach:** {('Networking/Infra (PoE, cabling) as natural CCTV attach' if 'CCTV / IP Video' in category_hits else 'Accessories, power, cabling as attach')}
 7. **Gap to close:** {gaps[0] if gaps else 'None critical'}
 

@@ -180,20 +180,44 @@ Extract (CATEGORY-FIRST approach):
 
 Search Apify store first: `await mcp__Apify__search-actors("website scraper")` then use the best match.
 
-### Step 2: Perplexity Research
-
-Run the Python research script:
+### Step 2: Perplexity Research (optional — use if PERPLEXITY_API_KEY is set and working)
 
 ```bash
 python3 scripts/prospect_research.py "<company_name>" "<website_url>"
 ```
 
-This queries Perplexity's API with structured prompts to gather:
-- Companies House data (entity status, directors, SIC, incorporation)
-- Recent news (acquisitions, expansions, contract wins, hires)
-- Buying signals (job ads for procurement/engineers, new offices)
-- Accreditation verification
-- Incumbent distributor clues
+Queries Perplexity for: Companies House, news, buying signals, contacts, incumbent distributors.
+
+**Note:** If Perplexity API returns 403 (IP/domain allowlist restriction), skip to Step 2b.
+
+### Step 2b: Manual research via Apify MCP (fallback — always available)
+
+Use Apify RAG web browser directly from this skill to research the company, then write
+results to a JSON file for the scorer:
+
+```
+Search queries to run via mcp__Apify__apify--rag-web-browser:
+  1. "[Company name] UK Companies House security installer CCTV fire access"
+  2. "[Company name] UK CCTV access control fire alarm brands services"
+  3. "[Company name] UK hiring news acquisition contract wins 2025 2026"
+  4. "[Company name] UK director contacts procurement distributor supplier"
+
+Write all results to: research_<SafeName>.json in format:
+{
+  "company_name": "...",
+  "website": "...",
+  "research_date": "YYYY-MM-DD",
+  "crm_data": { ...crm fields from input CSV... },
+  "queries": {
+    "firmographics": "<text from query 1>",
+    "brands_services": "<text from query 2>",
+    "growth_signals": "<text from query 3>",
+    "contacts_incumbents": "<text from query 4>"
+  }
+}
+```
+
+Then run the scorer: `python3 scripts/prospect_scorer.py research_<SafeName>.json`
 
 ### Step 3: LinkedIn Research (Apify)
 
