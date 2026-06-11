@@ -21,14 +21,19 @@ Where `<input>` is one of:
 
 ## Oprema Product Lines (Scoring Reference)
 
-| Line | Key Brands | Fit Signal |
-|------|-----------|------------|
-| **CCTV / IP Video** | Dahua, Milestone, Secure Logiq, Hanwha | Installs CCTV, NVRs, video analytics |
-| **Intruder / Alarm** | Ajax, Texecom, Honeywell, Pyronix | Intruder alarms, ARC monitoring |
-| **Fire** | Advanced Electronics, Apollo, Hochiki, Notifier | Fire alarm design, install, maintain |
-| **Access Control** | Paxton, Videx, HID, Salto | Door entry, access control, intercoms |
-| **Networking / Storage** | Seagate SV, WD Purple, PoE switches | IP CCTV infrastructure |
-| **ProAV** | PA systems, digital signage | Audiovisual installs (secondary fit) |
+Brands listed in **profit order** (Tier 1 = highest margin). May volumes = units sold by Oprema.
+
+| Line | May Volume | Oprema Brands (profit rank) | Fit Signal |
+|------|-----------|----------------------------|------------|
+| **Access Control** | **29,598 units** | Paxton ★★★★, Comelit ★★★, Intratone ★★, ICS ★★, CDVI ★★, RGL ★★, Vanderbilt ★★ | Door entry, access, video intercom, barrier |
+| **Fire Detection** | **20,945 units** | Apollo ★★★, Advanced Electronics ★★★, Hochiki ★★, Bosch ★ | Fire alarm design/install/maintenance |
+| **CCTV / IP Video** | **~12,830 units** | Dahua ★★★★★, Hanwha ★★★★★, Ernitec ★★★★★, Olix ★★, Secure Logiq ★★, Bosch ★ | CCTV, NVR/DVR, video analytics, IP cameras |
+| **Intruder / Alarm** | **~7,802 units** | Ajax ★★★★★, Texecom ★★, CQR ★, Bosch ★ | Intruder alarms, ARC monitoring, panels |
+| **Networking / Infra** | **~5,512 units** | Lanview ★★, STP ★, AMG ★ | Structured cabling, PoE, fibre, patch |
+| **Illumination** | **~288 units** | Raytec ★★ | IR/white light illuminators for CCTV |
+| **Video Management** | **~898 units** | Secure Logiq ★★ | Video servers, NVR appliances, VMS |
+
+★★★★★ = Tier 1 (top profit) · ★★★ = Tier 2 · ★★ = Tier 3
 
 ---
 
@@ -38,10 +43,13 @@ Where `<input>` is one of:
 
 | Score | Criteria |
 |-------|----------|
-| 3 | VERIFIED strong fit: company installs 2+ Oprema brand lines as core business |
-| 2 | STRONG fit: installs relevant sector (CCTV/fire/access) but specific brands UNVERIFIED |
-| 1 | PARTIAL fit: sector-adjacent or single-line installer |
-| 0 | No fit: no security/fire/access install business |
+| 3 | 1+ Tier-1 Oprema brand VERIFIED (Dahua/Hanwha/Ernitec/Paxton/Ajax/Bosch) **or** 2+ any Oprema brands confirmed |
+| 2 | 1 Oprema brand found (INFERRED from research), **or** strong sector match in Access Control/Fire/CCTV without specific brand confirmation |
+| 1 | Sector-adjacent only — security/fire/access installer but no Oprema brand signals |
+| 0 | No security/fire/access/intruder install business evident |
+
+**Priority order** (which lines drive most Oprema revenue):
+Access Control (29k/mo) → Fire Detection (21k/mo) → CCTV/IP Video (13k/mo) → Intruder/Alarm (8k/mo)
 
 ### Dimension 2: Registry / Firmographics (0–3)
 

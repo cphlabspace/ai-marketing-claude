@@ -23,28 +23,25 @@ from datetime import datetime
 PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions"
 PERPLEXITY_MODEL = "llama-3.1-sonar-large-128k-online"
 
-OPREMA_BRANDS = [
-    "Dahua", "Ajax", "Texecom", "Paxton", "Advanced Electronics",
-    "Apollo", "Hochiki", "Honeywell", "Milestone", "Secure Logiq", "Videx",
-    "Pyronix", "Hikvision", "Hanwha", "HID", "Salto", "Bosch", "Gallagher",
-    "Notifier", "Kentec", "Gent", "C-TEC", "Seagate", "Western Digital",
-    "Ubiquiti", "TP-Link", "Axis"
+# Oprema brand portfolio in profit order (Tier 1 = highest profit)
+OPREMA_BRANDS_BY_PROFIT = [
+    # Tier 1 — top profit
+    "Dahua", "Hanwha", "Ernitec", "Paxton", "Ajax", "Bosch",
+    # Tier 2
+    "Olix", "Secure Logiq", "Comelit", "Apollo", "Advanced Electronics",
+    "Lanview", "Intratone",
+    # Tier 3
+    "STP", "ICS", "Texecom", "Hochiki", "RGL", "CQR", "Raytec",
+    "CDVI", "AMG", "Vanderbilt",
 ]
 
-OPREMA_LINE_KEYWORDS = {
-    "CCTV / IP Video": ["CCTV", "IP camera", "NVR", "DVR", "video surveillance",
-                         "video analytics", "body worn", "ANPR", "PTZ"],
-    "Intruder / Alarm": ["intruder alarm", "burglar alarm", "alarm system",
-                          "ARC monitoring", "alarm receiving centre", "grade 2", "grade 3",
-                          "NSI NACOSS", "SSAIB intruder"],
-    "Fire": ["fire alarm", "fire detection", "smoke detector", "heat detector",
-              "fire suppression", "BAFE", "BS 5839", "FIA", "fire panel"],
-    "Access Control": ["access control", "door entry", "intercom", "video intercom",
-                        "door access", "key fob", "biometric", "turnstile", "barrier"],
-    "Networking / Storage": ["PoE switch", "structured cabling", "NVR storage",
-                               "surveillance HDD", "SSD", "network rack"],
-    "ProAV": ["public address", "PA system", "digital signage", "AV install",
-               "audiovisual", "projector", "screen"]
+# Oprema item groups with May QTY (used to contextualise line value in queries)
+OPREMA_TOP_LINES = {
+    "Access Control":  29041,   # Paxton, Comelit, Intratone, ICS, CDVI, RGL, Vanderbilt
+    "Fire Detection":  20945,   # Apollo, Advanced Electronics, Hochiki, Bosch
+    "CCTV / IP Video": 12830,   # Dahua, Hanwha, Ernitec, Olix, Secure Logiq
+    "Intruder / Alarm": 7802,   # Ajax, Texecom, CQR, Bosch
+    "Networking / Infra": 5512, # Lanview, STP, AMG
 }
 
 
@@ -125,16 +122,20 @@ Format as structured data. Label each fact as VERIFIED (from Companies House / o
         results["queries"]["firmographics"] = f"ERROR: {e}"
 
     # --- Query 2: Products, Brands & Services ---
+    brand_list = ", ".join(OPREMA_BRANDS_BY_PROFIT)
     q2 = f"""Research the security installation company "{company_name}" ({website}).
 
 Find and report:
 1. Exact services offered: CCTV, intruder alarms, fire alarms, access control, networking, PA systems, other
-2. Specific product brands/manufacturers they install or are certified for
-   - Look for: Dahua, Ajax, Texecom, Paxton, Advanced, Apollo, Hochiki, Honeywell, Milestone, Secure Logiq, Videx, Pyronix, Hikvision, Hanwha, HID, Bosch, Notifier, Kentec, Gent
+2. Specific product brands/manufacturers they install or are certified for.
+   Oprema distributes these brands — check specifically for each:
+   TIER 1 (highest value): {", ".join(OPREMA_BRANDS_BY_PROFIT[:6])}
+   TIER 2: {", ".join(OPREMA_BRANDS_BY_PROFIT[6:13])}
+   TIER 3: {", ".join(OPREMA_BRANDS_BY_PROFIT[13:])}
 3. Any partner/brand certifications listed on their website or manufacturer websites
-4. Market segments served: residential, commercial, industrial, retail, healthcare, education, critical infrastructure
+4. Market segments served: residential, commercial, industrial, retail, healthcare, education
 5. Geographic coverage area
-6. Size signals: number of engineers, project scale (small/medium/large), typical contract values if known
+6. Size signals: number of engineers, project scale, typical contract values if known
 
 Label each finding as VERIFIED (found on company website/manufacturer's partner page) or INFERRED."""
 
