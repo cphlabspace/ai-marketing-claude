@@ -95,9 +95,9 @@ OPREMA_CATEGORIES = {
         "oprema_brands": ["Paxton", "Comelit", "Intratone", "ICS", "CDVI", "RGL", "Vanderbilt"],
         "keywords": [
             "access control", "door entry", "intercom", "video intercom", "door controller",
-            "key fob", "card reader", "turnstile", "barrier", "door access", "biometric",
+            "key fob", "card reader", "turnstile", "barrier", "door access", "biometric entry",
             "proximity reader", "electronic lock", "door station", "door phone",
-            "access management", "credential", "door hardware"
+            "door hardware", "gate controller", "barrier system", "fob entry"
         ],
     },
     "Fire Detection": {
@@ -202,9 +202,33 @@ def get_tier(score: int):
     return "Qualify", "⚪"
 
 
+_NEGATION_PATTERN = re.compile(
+    r'\b(no|not|none|without|never|doesn\'t|does not|cannot|can\'t|'
+    r'no evidence|not found|not identified|unverified|n/a)\b',
+    re.IGNORECASE,
+)
+
 def text_contains(text: str, keywords: list) -> list:
+    """Match keywords, skipping matches preceded by negation within 50 chars."""
     t = text.lower()
-    return [kw for kw in keywords if kw.lower() in t]
+    matched = []
+    for kw in keywords:
+        kw_lc = kw.lower()
+        pos = 0
+        found = False
+        while True:
+            idx = t.find(kw_lc, pos)
+            if idx == -1:
+                break
+            # Check 50 chars before the match for negation
+            window = t[max(0, idx - 50): idx]
+            if not _NEGATION_PATTERN.search(window):
+                found = True
+                break
+            pos = idx + 1
+        if found:
+            matched.append(kw)
+    return matched
 
 
 # ---------------------------------------------------------------------------
