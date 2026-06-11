@@ -1,6 +1,4 @@
-company_name,website,notes,region
-Acme Fire & Security Ltd,acmesecurity.co.uk,SSAIB installer - Devon,South West
-Premier Security Systems,premiersecuritysystems.co.uk,,South East
-Guardian Alarms Ltd,guardianalarms.co.uk,NSI Gold accredited,Midlands
-TechGuard Installations,techguard.co.uk,Multisite - 3 offices,North West
-SecureFire Group,securefire.co.uk,Recent acquisition activity,Wales
+Account Name	Customer Number	Primary Responsible	Category (Calculated)	Customer Category (D&B Potential)	Category (Manual Override)	Financial Revenue (DUNS) (DUNS)	Number Of Employees (DUNS) (DUNS)	HIPO evaluation	HIPO evaluation date	Owning Business Unit	Website
+CDN Networks Limited	10470	Donna Butterworth	Silver	Silver	Silver	332833,00	3	No	14-07-2025	Oprema
+Highcross Security &Electrical	11135	SMB-OPR	Leads	Gold		131620,00	5	No	17-04-2025	Oprema
+PWD Supplies	14097	Jude Obiekwugo	Bronze	Gold	Silver	2129780,00	23	No	21-03-2025	Oprema	https://www.pwdsupplies.co.uk/

@@ -13,9 +13,30 @@ Oprema is a UK multi-discipline security distributor carrying 100+ brands includ
 ```
 
 Where `<input>` is one of:
-- A CSV file path: `/prospect-score prospects.csv`
-- A single company: `/prospect-score "Acme Security Ltd, acmesecurity.co.uk"`
-- A list file: `/prospect-score companies.txt`
+- **Oprema CRM export** (primary format): `/prospect-score crm_export.csv`
+- **Simple CSV**: `/prospect-score companies.csv`
+- **Single company**: `/prospect-score "Acme Security Ltd, acmesecurity.co.uk"`
+
+### CRM Export Format (tab-separated)
+
+The standard Oprema CRM export has these columns:
+
+| Column | Used For |
+|--------|----------|
+| Account Name | Company to research |
+| Customer Number | CRM reference — included in brief |
+| Primary Responsible | Account manager — included in brief |
+| Category (Calculated) | Existing Oprema tier (Bronze/Silver/Gold) |
+| Customer Category (D&B Potential) | D&B rating — boosts firmographics score |
+| Category (Manual Override) | Manual tier override |
+| Financial Revenue (DUNS) | Company revenue — included in snapshot |
+| Number Of Employees (DUNS) | Headcount — included in snapshot |
+| HIPO evaluation | Yes/No — boosts buying signal if Yes |
+| HIPO evaluation date | Date of HIPO assessment |
+| Owning Business Unit | Oprema region/team |
+| Website | Company website (leave blank if unknown — will search) |
+
+**Note:** Website column can be empty — the research will find it via company name search.
 
 ---
 
@@ -39,17 +60,33 @@ Brands listed in **profit order** (Tier 1 = highest margin). May volumes = units
 
 ## Scoring Rubric — 18 Points Max
 
-### Dimension 1: Brand / Line Fit (0–3)
+### SCORING PHILOSOPHY: Category first, brand second
+
+**The qualifying question is: what categories does this company operate in?**
+
+Any company installing CCTV (Hikvision, Axis, or any brand), access control, fire alarms,
+or intruder systems is a prospect for Oprema — regardless of which brands they currently use.
+Oprema brands found in research are recorded as **sales intelligence** for the rep, not as
+the scoring gate. A Hikvision CCTV installer is as qualified as a Dahua one.
+
+---
+
+### Dimension 1: Category Fit (0–3)
 
 | Score | Criteria |
 |-------|----------|
-| 3 | 1+ Tier-1 Oprema brand VERIFIED (Dahua/Hanwha/Ernitec/Paxton/Ajax/Bosch) **or** 2+ any Oprema brands confirmed |
-| 2 | 1 Oprema brand found (INFERRED from research), **or** strong sector match in Access Control/Fire/CCTV without specific brand confirmation |
-| 1 | Sector-adjacent only — security/fire/access installer but no Oprema brand signals |
-| 0 | No security/fire/access/intruder install business evident |
+| 3 | Installs in **2+ Oprema categories** — multi-line opportunity (e.g. CCTV + access, or fire + access) |
+| 2 | Strong fit in **1 high-volume category**: Access Control (29k/mo), Fire (21k/mo), CCTV (13k/mo), or Intruder (8k/mo) |
+| 1 | Single lower-volume category (networking/infra, illumination) or weak/inferred category evidence |
+| 0 | No security/fire/access/intruder install business found |
 
-**Priority order** (which lines drive most Oprema revenue):
-Access Control (29k/mo) → Fire Detection (21k/mo) → CCTV/IP Video (13k/mo) → Intruder/Alarm (8k/mo)
+**What to record alongside the score:**
+- Oprema brands found: confirms category + reveals they may already know Oprema's products
+- Non-Oprema brands found (Hikvision, HID, Pyronix, etc.): confirms category + gives the rep a pitch angle
+  ("We also carry [Oprema equivalent] — worth comparing?")
+
+**Volume priority** (which categories drive most Oprema revenue):
+Access Control (29,598/mo) → Fire Detection (20,945/mo) → CCTV/IP Video (12,830/mo) → Intruder/Alarm (7,802/mo)
 
 ### Dimension 2: Registry / Firmographics (0–3)
 
@@ -119,15 +156,26 @@ For each company, execute the following research steps in order:
 
 Use Apify MCP to run the `apify/website-content-crawler` or `apify/cheerio-scraper` actor.
 
+**If website is not in the CRM data, search for it first using the company name.**
+
 ```
 Target: company website homepage + /about, /services, /partners, /brands pages
-Extract:
-  - Services offered (CCTV, fire, access, intruder)
-  - Brand/manufacturer mentions
-  - Accreditations (SSAIB, NSI, BAFE, NICEIC, Safe Contractor)
-  - Geographic coverage
-  - Company history and size signals
-  - Contact information
+Extract (CATEGORY-FIRST approach):
+  PRIMARY — which categories do they operate in?
+    - CCTV / Video Surveillance installs
+    - Access Control / door entry installs
+    - Fire Detection / fire alarm installs
+    - Intruder / Burglar Alarm installs
+    - Networking / structured cabling
+
+  SECONDARY — brand intelligence for sales rep:
+    - Specific manufacturer brands mentioned (any brand, not just Oprema's)
+    - Accreditations: SSAIB, NSI, BAFE, NICEIC, Safe Contractor
+
+  CONTEXT:
+    - Geographic coverage
+    - Company size signals
+    - Contact information
 ```
 
 Search Apify store first: `await mcp__Apify__search-actors("website scraper")` then use the best match.

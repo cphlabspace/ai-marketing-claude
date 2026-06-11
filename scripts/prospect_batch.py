@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 """
 Oprema Prospect Batch Runner
-Reads a CSV of companies, runs research + scoring for each, generates all outputs.
+Reads a CRM export CSV, runs research + scoring for each company,
+and generates all output files.
 
-Input CSV format (one of):
-  company_name,website
-  company_name,website,notes
-  company_name,website,notes,region
+Supported CSV formats:
+  1. Oprema CRM export (tab or comma separated):
+     Account Name | Customer Number | Primary Responsible | Category (Calculated) |
+     Customer Category (D&B Potential) | Category (Manual Override) |
+     Financial Revenue (DUNS) | Number Of Employees (DUNS) |
+     HIPO evaluation | HIPO evaluation date | Owning Business Unit | Website
+
+  2. Simple format:
+     company_name,website
+     company_name,website,notes
 
 Usage:
-    python3 prospect_batch.py prospects.csv
-    python3 prospect_batch.py prospects.csv --skip-research   # score only (needs existing research files)
-    python3 prospect_batch.py prospects.csv --limit 5         # process first 5 only
+    python3 prospect_batch.py crm_export.csv
+    python3 prospect_batch.py crm_export.csv --limit 5
+    python3 prospect_batch.py crm_export.csv --skip-research   # re-score existing research files
 
 Requires: PERPLEXITY_API_KEY environment variable
 """
@@ -27,34 +34,88 @@ import subprocess
 from datetime import datetime
 
 
-def load_input(csv_path: str) -> list[dict]:
-    companies = []
-    with open(csv_path, encoding="utf-8") as f:
-        # Handle with or without header
-        sample = f.read(256)
-        f.seek(0)
-        has_header = not sample.strip().split("\n")[0][0].isdigit()
-        reader = csv.DictReader(f) if has_header else csv.reader(f)
+# Column name aliases for the Oprema CRM export format
+CRM_COLUMN_MAP = {
+    "company_name":         ["Account Name", "account_name", "company_name", "name", "company"],
+    "customer_number":      ["Customer Number", "customer_number", "customer_id"],
+    "primary_responsible":  ["Primary Responsible", "primary_responsible", "account_manager", "rep"],
+    "category_calculated":  ["Category (Calculated)", "category_calculated"],
+    "dandb_category":       ["Customer Category (D&B Potential)", "dandb_category", "db_category"],
+    "category_override":    ["Category (Manual Override)", "category_override"],
+    "revenue_duns":         ["Financial Revenue (DUNS) (DUNS)", "Financial Revenue (DUNS)", "revenue_duns", "revenue"],
+    "employees_duns":       ["Number Of Employees (DUNS) (DUNS)", "Number Of Employees (DUNS)", "employees_duns", "employees"],
+    "hipo_eval":            ["HIPO evaluation", "hipo_eval", "hipo"],
+    "hipo_date":            ["HIPO evaluation date", "hipo_date"],
+    "business_unit":        ["Owning Business Unit", "business_unit"],
+    "website":              ["Website", "website", "url", "domain"],
+    "notes":                ["notes", "note", "comment"],
+    "region":               ["region", "location", "area"],
+}
 
-        if has_header:
-            for row in reader:
-                name = row.get("company_name") or row.get("name") or row.get("company") or ""
-                website = row.get("website") or row.get("url") or row.get("domain") or ""
-                notes = row.get("notes") or row.get("note") or ""
-                region = row.get("region") or row.get("location") or ""
-                if name.strip():
-                    companies.append({"name": name.strip(), "website": website.strip(),
-                                       "notes": notes.strip(), "region": region.strip()})
-        else:
-            for row in reader:
-                if row:
-                    name = row[0].strip()
-                    website = row[1].strip() if len(row) > 1 else ""
-                    notes = row[2].strip() if len(row) > 2 else ""
-                    region = row[3].strip() if len(row) > 3 else ""
-                    if name:
-                        companies.append({"name": name, "website": website,
-                                           "notes": notes, "region": region})
+
+def find_column(headers: list, field_key: str) -> str | None:
+    """Find the actual column header matching a logical field name."""
+    aliases = CRM_COLUMN_MAP.get(field_key, [field_key])
+    for alias in aliases:
+        for h in headers:
+            if h.strip().lower() == alias.strip().lower():
+                return h
+    return None
+
+
+def parse_crm_row(row: dict, headers: list) -> dict:
+    """Extract standardised fields from a CRM row."""
+    result = {}
+    for field_key in CRM_COLUMN_MAP:
+        col = find_column(headers, field_key)
+        result[field_key] = row.get(col, "").strip() if col else ""
+    return result
+
+
+def detect_delimiter(filepath: str) -> str:
+    """Detect if the file is tab or comma separated."""
+    with open(filepath, encoding="utf-8-sig") as f:
+        sample = f.read(512)
+    tab_count   = sample.count("\t")
+    comma_count = sample.count(",")
+    return "\t" if tab_count > comma_count else ","
+
+
+def load_crm_csv(csv_path: str) -> list:
+    """Load CRM export CSV. Returns list of standardised company dicts."""
+    delimiter = detect_delimiter(csv_path)
+    companies = []
+
+    with open(csv_path, encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f, delimiter=delimiter)
+        headers = reader.fieldnames or []
+
+        # Check if this looks like a CRM export or a simple CSV
+        is_crm_format = any(
+            find_column(headers, k) for k in ["customer_number", "dandb_category", "revenue_duns"]
+        )
+
+        for row in reader:
+            if is_crm_format:
+                data = parse_crm_row(row, headers)
+            else:
+                # Simple format fallback
+                data = {
+                    "company_name": (row.get("company_name") or row.get("name") or
+                                     row.get("Account Name") or "").strip(),
+                    "website":      (row.get("website") or row.get("url") or "").strip(),
+                    "notes":        (row.get("notes") or "").strip(),
+                    "region":       (row.get("region") or "").strip(),
+                    "customer_number": "", "primary_responsible": "",
+                    "category_calculated": "", "dandb_category": "",
+                    "category_override": "", "revenue_duns": "",
+                    "employees_duns": "", "hipo_eval": "",
+                    "hipo_date": "", "business_unit": "",
+                }
+
+            if data.get("company_name"):
+                companies.append(data)
+
     return companies
 
 
@@ -64,45 +125,76 @@ def safe_filename(name: str) -> str:
 
 def run_research(company: dict, api_key: str) -> str | None:
     """Run prospect_research.py for one company. Returns output JSON path."""
-    safe = safe_filename(company["name"])
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output = f"research_{safe}_{ts}.json"
+    safe  = safe_filename(company["company_name"])
+    ts    = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output= f"research_{safe}_{ts}.json"
+
+    # Pass CRM data as JSON so it gets embedded in the research file
+    crm_payload = {
+        k: v for k, v in company.items()
+        if k not in ("company_name", "website") and v
+    }
 
     cmd = [
         sys.executable, "scripts/prospect_research.py",
-        company["name"], company.get("website", ""),
+        company["company_name"],
+        company.get("website", ""),
         "--output", output,
         "--api-key", api_key,
     ]
+    if crm_payload:
+        cmd += ["--crm-json", json.dumps(crm_payload)]
 
-    print(f"\n  Researching: {company['name']} ({company.get('website','')})...")
+    print(f"\n  Researching: {company['company_name']}"
+          f" | Revenue: {company.get('revenue_duns','—')}"
+          f" | Employees: {company.get('employees_duns','—')}"
+          f" | D&B: {company.get('dandb_category','—')}")
+
     result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.stdout:
+        # Show last few lines (progress output)
+        lines = result.stdout.strip().split("\n")
+        for line in lines[-4:]:
+            print(f"    {line}")
 
     if result.returncode != 0:
-        print(f"  ERROR researching {company['name']}: {result.stderr[:200]}")
+        print(f"  ERROR: {result.stderr[:200]}")
         return None
 
-    print(result.stdout[-300:] if result.stdout else "  (no output)")
     return output if os.path.exists(output) else None
 
 
 def run_scoring(research_file: str) -> str | None:
-    """Run prospect_scorer.py on a research file. Returns score JSON path."""
-    base = research_file.replace("research_", "score_").replace(".json", "_scored.json")
+    """Run prospect_scorer.py. Returns score JSON path."""
+    score_file = research_file.replace("research_", "score_")
+    brief_base = research_file.replace("research_", "PROSPECT-").replace(".json", "")
+    # Load company name for brief filename
+    try:
+        with open(research_file, encoding="utf-8") as f:
+            data = json.load(f)
+        safe = safe_filename(data.get("company_name", "unknown"))
+        brief_file = f"PROSPECT-{safe}.md"
+    except Exception:
+        brief_file = brief_base + ".md"
+
     cmd = [
         sys.executable, "scripts/prospect_scorer.py",
         research_file,
-        "--json-output", base,
+        "--json-output", score_file,
+        "--brief-output", brief_file,
     ]
 
     result = subprocess.run(cmd, capture_output=True, text=True)
-    print(result.stdout[-400:] if result.stdout else "")
+    if result.stdout:
+        lines = result.stdout.strip().split("\n")
+        for line in lines[-6:]:
+            print(f"    {line}")
 
     if result.returncode != 0:
-        print(f"  ERROR scoring {research_file}: {result.stderr[:200]}")
+        print(f"  ERROR scoring: {result.stderr[:200]}")
         return None
 
-    return base if os.path.exists(base) else None
+    return score_file if os.path.exists(score_file) else None
 
 
 def run_batch_report(score_files: list, output_csv: str, output_summary: str):
@@ -120,56 +212,70 @@ def run_batch_report(score_files: list, output_csv: str, output_summary: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Oprema Prospect Batch Runner")
-    parser.add_argument("input_csv", help="CSV file with company_name,website columns")
+    parser.add_argument("input_csv",
+                        help="CRM export CSV (Oprema format) or simple company_name,website CSV")
     parser.add_argument("--skip-research", action="store_true",
-                         help="Skip Perplexity research, use existing research_*.json files")
-    parser.add_argument("--limit", type=int, help="Process first N companies only")
-    parser.add_argument("--delay", type=float, default=2.0,
-                         help="Seconds between API calls (default: 2)")
-    parser.add_argument("--output-csv", default="prospects_scored.csv")
+                        help="Skip Perplexity research, re-score existing research_*.json files")
+    parser.add_argument("--limit",  type=int, help="Process first N companies only")
+    parser.add_argument("--delay",  type=float, default=2.5,
+                        help="Seconds between API calls (default: 2.5)")
+    parser.add_argument("--output-csv",     default="prospects_scored.csv")
     parser.add_argument("--output-summary", default="PROSPECT-SUMMARY.md")
-    parser.add_argument("--api-key", help="Perplexity API key (or set PERPLEXITY_API_KEY)")
+    parser.add_argument("--api-key",
+                        help="Perplexity API key (or set PERPLEXITY_API_KEY env var)")
     args = parser.parse_args()
 
     api_key = args.api_key or os.environ.get("PERPLEXITY_API_KEY")
     if not api_key and not args.skip_research:
-        print("ERROR: PERPLEXITY_API_KEY required for research. Set env var or use --api-key")
+        print("ERROR: PERPLEXITY_API_KEY required. Set env var or use --api-key")
         sys.exit(1)
 
-    companies = load_input(args.input_csv)
+    companies = load_crm_csv(args.input_csv)
+    if not companies:
+        print(f"No companies found in {args.input_csv}")
+        sys.exit(1)
+
     if args.limit:
         companies = companies[:args.limit]
 
     print(f"\nOprema Prospect Batch Runner")
-    print(f"{'='*50}")
+    print(f"{'='*55}")
     print(f"Input:      {args.input_csv}")
     print(f"Companies:  {len(companies)}")
-    print(f"Research:   {'SKIP (using existing files)' if args.skip_research else 'Perplexity API'}")
+    print(f"Research:   {'SKIP — using existing files' if args.skip_research else 'Perplexity API'}")
     print(f"Output CSV: {args.output_csv}")
-    print(f"Summary:    {args.output_summary}\n")
+    print(f"Summary:    {args.output_summary}")
+
+    # Show D&B category distribution if available
+    dnb_counts = {}
+    for c in companies:
+        cat = c.get("dandb_category") or c.get("category_calculated") or "Unknown"
+        dnb_counts[cat] = dnb_counts.get(cat, 0) + 1
+    if len(dnb_counts) > 1:
+        print(f"\nD&B Categories in input:")
+        for cat, count in sorted(dnb_counts.items(), key=lambda x: -x[1]):
+            print(f"  {cat}: {count}")
 
     score_files = []
     failed = []
 
     if args.skip_research:
-        # Use existing research files
         existing = glob.glob("research_*.json")
         if not existing:
-            print("No research_*.json files found. Run without --skip-research first.")
+            print("\nNo research_*.json files found. Run without --skip-research first.")
             sys.exit(1)
-        print(f"Using {len(existing)} existing research files...")
+        print(f"\nUsing {len(existing)} existing research files...")
         for rf in existing:
             sf = run_scoring(rf)
             if sf:
                 score_files.append(sf)
-            time.sleep(0.5)
+            time.sleep(0.3)
     else:
         for i, company in enumerate(companies, 1):
-            print(f"\n[{i}/{len(companies)}] {company['name']}")
-
+            print(f"\n[{i}/{len(companies)}] {company['company_name']}")
             rf = run_research(company, api_key)
             if not rf:
-                failed.append(company["name"])
+                failed.append(company["company_name"])
                 continue
 
             time.sleep(args.delay)
@@ -178,9 +284,8 @@ def main():
             if sf:
                 score_files.append(sf)
             else:
-                failed.append(company["name"])
+                failed.append(company["company_name"])
 
-            # Brief delay between companies to avoid API rate limits
             if i < len(companies):
                 time.sleep(args.delay)
 
@@ -191,7 +296,10 @@ def main():
     if failed:
         print(f"\nFailed ({len(failed)}): {', '.join(failed)}")
 
-    print(f"\nDone. {len(score_files)} companies scored, {len(failed)} failed.")
+    print(f"\nDone. {len(score_files)} scored, {len(failed)} failed.")
+    print(f"  Ranked CSV:  {args.output_csv}")
+    print(f"  Summary:     {args.output_summary}")
+    print(f"  Briefs:      PROSPECT-*.md")
 
 
 if __name__ == "__main__":
