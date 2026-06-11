@@ -32,6 +32,26 @@ import argparse
 import urllib.request
 import urllib.error
 from datetime import datetime
+from pathlib import Path
+
+
+def load_env_file():
+    """Load .env file from repo root if present (no external dependencies needed)."""
+    for candidate in [
+        Path(__file__).parent.parent / ".env",  # repo root
+        Path(".env"),                             # cwd
+    ]:
+        if candidate.exists():
+            with open(candidate) as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        key, _, val = line.partition("=")
+                        os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+            break
+
+
+load_env_file()
 
 
 PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions"

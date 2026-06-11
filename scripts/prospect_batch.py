@@ -32,6 +32,22 @@ import glob
 import argparse
 import subprocess
 from datetime import datetime
+from pathlib import Path
+
+
+def load_env_file():
+    for candidate in [Path(__file__).parent.parent / ".env", Path(".env")]:
+        if candidate.exists():
+            with open(candidate) as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        key, _, val = line.partition("=")
+                        os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+            break
+
+
+load_env_file()
 
 
 # Column name aliases for the Oprema CRM export format

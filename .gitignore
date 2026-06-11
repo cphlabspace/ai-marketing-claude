@@ -39,3 +39,16 @@ node_modules/
 # Temp
 *.tmp
 *.bak
+
+# Environment / secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+# .env.example is safe to commit (no real keys)
+
+# Prospect research outputs (contain company data — keep local)
+research_*.json
+score_*.json
+PROSPECT-*.md
+PROSPECT-SUMMARY.md
+prospects_scored.csv
