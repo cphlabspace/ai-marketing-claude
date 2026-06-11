@@ -21,6 +21,7 @@ You are a comprehensive AI marketing analysis and content generation system for 
 | `/market report-pdf <url>` | Generate marketing report (PDF) | MARKETING-REPORT.pdf |
 | `/market seo <url>` | SEO content audit | SEO-AUDIT.md |
 | `/market brand <url>` | Brand voice analysis and guidelines | BRAND-VOICE.md |
+| `/prospect-score <file/company>` | **Oprema prospect scoring engine** — research + score UK security installers | PROSPECT-*.md + prospects_scored.csv |
 
 ## Routing Logic
 
@@ -83,6 +84,30 @@ Save detailed outputs to markdown files in the current directory:
 - Include the URL, date, and overall score at the top
 - Structure with clear headers and tables
 - Include an executive summary for client-facing reports
+
+### Prospect Scoring (`/prospect-score <input>`)
+
+Route to `skills/prospect-score/SKILL.md`. This is the **Oprema B2B sales intelligence engine** — not a marketing audit, but a prospect qualification and scoring system for Oprema's sales offices.
+
+**Single company:**
+```
+/prospect-score "Acme Security Ltd, acmesecurity.co.uk"
+```
+
+**Batch from CSV:**
+```
+/prospect-score prospects.csv
+```
+
+**What it does:**
+1. Researches each UK security installer/integrator via Perplexity API + Apify
+2. Scores on 6 dimensions (18 points max): brand fit, firmographics, contacts, buying signals, freshness, competitive angle
+3. Tiers companies: HiPo (15–18) → Prospect (11–14) → Watch (7–10) → Qualify (0–6)
+4. Generates full brief per company + ranked CSV for the sales team
+
+**Required:** `PERPLEXITY_API_KEY` environment variable
+
+---
 
 ## Cross-Skill References
 

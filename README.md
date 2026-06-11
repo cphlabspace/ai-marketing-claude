@@ -75,6 +75,45 @@ pip install reportlab
 | `/market report-pdf <url>` | Professional marketing report (PDF) |
 | `/market seo <url>` | SEO content audit |
 | `/market brand <url>` | Brand voice analysis and guidelines |
+| **`/prospect-score <file>`** | **Oprema prospect scoring engine** — research + score UK security installers |
+
+### Prospect Scoring Engine (Oprema)
+
+Score a single company or a batch from CSV:
+
+```
+> /prospect-score prospects.csv
+
+[1/5] Acme Fire & Security Ltd (acmesecurity.co.uk)
+  [1/4] Researching Companies House & firmographics...
+  [2/4] Researching products, brands & services...
+  [3/4] Researching news, growth signals...
+  [4/4] Researching contacts & incumbent distributors...
+
+=== OPREMA PROSPECT SCORED ===
+Company:  Acme Fire & Security Ltd
+Score:    14/18 — 🟠 PROSPECT
+
+Dimension Scores:
+  Brand/Line Fit:          2/3  ██░  INFERRED
+  Registry/Firmographics:  3/3  ███  VERIFIED
+  Contact Access:          2/3  ██░  INFERRED
+  Opportunity/Buying:      3/3  ███  VERIFIED
+  Freshness:               2/3  ██░  INFERRED
+  Competitive/Incumbent:   2/3  ██░  INFERRED
+
+Brief saved to: PROSPECT-AcmeFireSecurity.md
+
+=== BATCH COMPLETE ===
+🔴 HiPo (15–18):    1 company
+🟠 Prospect (11–14): 2 companies
+🟡 Watch (7–10):     1 company
+⚪ Qualify (0–6):    1 company
+
+Full ranked list: prospects_scored.csv
+```
+
+**Requires:** `PERPLEXITY_API_KEY` environment variable
 
 ---
 
@@ -111,7 +150,15 @@ ai-marketing-claude/
 │   ├── analyze_page.py                 # Webpage marketing analysis
 │   ├── competitor_scanner.py           # Competitor website scanner
 │   ├── social_calendar.py              # Social content calendar generator
-│   └── generate_pdf_report.py          # PDF report generator
+│   ├── generate_pdf_report.py          # PDF report generator
+│   ├── prospect_research.py            # Perplexity API research per company
+│   ├── prospect_scorer.py              # 6-dimension Oprema scoring engine
+│   ├── prospect_batch.py               # Batch runner (CSV input)
+│   └── prospect_report.py              # Ranked CSV + executive summary output
+│
+├── skills/
+│   ├── ...                             # 14 marketing sub-skills
+│   └── prospect-score/SKILL.md         # Oprema prospect scoring skill
 │
 ├── templates/                          # Marketing templates
 │   ├── email-welcome.md                # Welcome email sequence (5 emails)
@@ -119,7 +166,8 @@ ai-marketing-claude/
 │   ├── email-launch.md                 # Product launch sequence (8 emails)
 │   ├── proposal-template.md            # Client proposal template
 │   ├── content-calendar.md             # 30-day content calendar
-│   └── launch-checklist.md             # Launch checklist
+│   ├── launch-checklist.md             # Launch checklist
+│   └── prospects_sample.csv            # Sample input CSV for prospect scoring
 │
 ├── install.sh                          # One-command installer
 ├── uninstall.sh                        # Clean uninstaller
